@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.0/jquery.min.js"></script>
+        <script>
+            const versionMap = {
+                "jpn": 608,
+                "usa": 609,
+                "eur": 610,
+            };
+
+            const branchOffsetMap = {
+                "jpn": 0x81332f54,
+                "usa": 0x813339dc,
+                "eur": 0x81333a54,
+            }
+
+            const gettimeAddressMap = {
+                "jpn": 0x8155fc0c,
+                "usa": 0x81536ccc,
+                "eur": 0x81536dc8,
+            }
+
+            const udivdi3AddressMap = {
+                "jpn": 0x816255d4,
+                "usa": 0x815fc3b8,
+                "eur": 0x815fc610,
+            };
+
+            const setUniversalTimeAddressMap = {
+                "jpn": 0x814d7f0c,
+                "usa": 0x814aefcc,
+                "eur": 0x814af0c8,
+            };
+
+            function ppc_EXT24(x) {
+                return ((x & 0x7FFFFFF) - ((x & 0x7FFFFFF) >> 25 << 26)) & 0x7FFFFFF;
+            }
+
+            function ppc_B(addr, func) {
+                return 0x48000000 | (ppc_EXT24((func) - (addr)));
+            }
+
+            function ppc_BL(addr, func) {
+                return ppc_B(addr, func) | 1;
+            }
+
+            function generatePatch(region, offset_secs) {
+                let offset = 0x386D4380 - offset_secs;
+                let output = "";
+                output += "0x9421fff8,"; // stwu    r1,-8(r1
+                output += "0x7c0802a6,"; // mflr    r0
+                output += "0x9001000c,"; // stw     r0,12(r1)
+                output += "0x" + ppc_BL(0x812a000c, gettimeAddressMap[region]).toString(16).padStart(8, "0") + ",";
+                output += "0x3cc0039e,"; // lis     r6,926
+                output += "0x38a00000,"; // li      r5,0"
+                output += "0x60c6f8b0,"; // ori     r6,r6,63664
+                output += "0x" + ppc_BL(0x812a001c, udivdi3AddressMap[region]).toString(16).padStart(8, "0") + ",";
+                output += "0x8001000c,"; // lwz     r0,12(r1)
+                output += "0x3d20" + (offset >> 16).toString(16).padStart(4, "0") + ",";
+                output += "0x6129" + (offset & 0xFFFF).toString(16).padStart(4, "0") + ",";
+                output += "0x7c844814,"; // addc    r4,r4,r9
+                output += "0x38a00001,"; // li      r5,1
+                output += "0x7c630194,"; // addze   r3,r3
+                output += "0x7c0803a6,"; // mtlr    r0
+                output += "0x38210008,"; // addi    r1,r1,8
+                output += "0x" + ppc_B(0x812a0040, setUniversalTimeAddressMap[region]).toString(16).padStart(8, "0");
+                return output;
+            }
+
+            $(document).ready(() => {
+                $("#generate").click(() => {
+                    let output = "";
+                    let region = $("#region").val();
+                    let hour_offset = $("#hour_offset").val();
+                    let minute_offset = $("#minute_offset").val();
+
+                    output += "[Fix NWC24iSetUniversalTime (" + region.toUpperCase() + ", UTC" + ((hour_offset>0)?"+":"") + hour_offset + ":" + minute_offset.padStart(2, "0") + ")]\n";
+                    output += "maxversion=" + versionMap[region] + "\n";
+                    output += "minversion=" + versionMap[region] + "\n";
+
+                    output += "amount=2\n";
+
+                    // patch branch to custom stub
+                    output += "offset=0x" + branchOffsetMap[region].toString(16).padStart(8, "0") + "\n";
+                    output += "patch=0x" + ppc_BL(branchOffsetMap[region], 0x812a0000).toString(16).padStart(8, "0") + "\n";
+
+                    // write custom stub
+                    output += "offset=0x812a0000\n";
+                    output += "patch=" + generatePatch(region, hour_offset * 60 * 60 + minute_offset * 60) + "\n";
+
+                    $("#output_field").val(output);
+                });
+            });
+        </script>
+    </head>
+    <body>
+        <h1>vWii Priiloader WC24 timestamp fix generator</h1>
+        <label>UTC Offset:
+            <input type="number" id="hour_offset" min="-24" max="24">
+            :
+            <input type="number" id="minute_offset" min="0" max="59">
+        </label>
+
+        <br>
+        <label for="region">Select region:</label>
+        <select name="region" id="region">
+            <option value="jpn">JPN</option>
+            <option value="usa">USA</option>
+            <option value="eur">EUR</option>
+        </select>
+        <br>
+        <button id="generate">Generate</button>
+        <br>
+        <textarea readonly id="output_field" style="width: 800px; height: 200px;"></textarea>
+    </body>
+</html>
