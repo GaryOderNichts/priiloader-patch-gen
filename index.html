@@ -151,6 +151,11 @@
                     let hour_offset = $("#hourOffset").val();
                     let minute_offset = $("#minuteOffset").val();
 
+                    if (Math.abs(hour_offset) > 24 || hour_offset == "" || minute_offset < 0 || minute_offset > 59 || minute_offset == "") {
+                        alert("Invalid UTC offset");
+                        return;
+                    }
+
                     output += "[Fix NWC24iSetUniversalTime (" + region.toUpperCase() + ", UTC" + ((hour_offset>0)?"+":"") + hour_offset + ":" + minute_offset.padStart(2, "0") + ")]\n";
                     output += "maxversion=" + versionMap[region] + "\n";
                     output += "minversion=" + versionMap[region] + "\n";
