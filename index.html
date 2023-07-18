@@ -1,13 +1,23 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Priiloader Timestamp Fix Generator</title>
+        <title>Priiloader UTC Fix Generator</title>
         <style>
             body {
                 width: 100%;
                 margin: auto;
                 background: #0f0f0f;
                 color: #fcfcfc;
+            }
+
+            a:hover {
+                color: #3c9ef2;
+                text-decoration: none;
+            }
+
+            a {
+                color: #3c9ef2;
+                text-decoration: none;
             }
 
             h1 {
@@ -158,7 +168,7 @@
                         return;
                     }
 
-                    output += "[Fix NWC24iSetUniversalTime (" + region.toUpperCase() + ", UTC" + ((hour_offset>0)?"+":"") + hour_offset + ":" + minute_offset.padStart(2, "0") + ")]\n";
+                    output += "[Fix NWC24iSetUniversalTime (UTC" + ((hour_offset>0)?"+":"") + hour_offset + ":" + minute_offset.padStart(2, "0") + ")]\n";
                     output += "maxversion=" + versionMap[region] + "\n";
                     output += "minversion=" + versionMap[region] + "\n";
 
@@ -193,7 +203,7 @@
     </head>
     <body>
         <div class="content">
-            <h1>vWii Priiloader WC24 Timestamp Patch Generator</h1>
+            <h1>vWii Priiloader WC24 UTC Patch Generator</h1>
             <div class="options">
                 <label id='utcOffsetLabel'>UTC Offset (hh:mm):</label>
                 <input type="number" id="hourOffset" class="timefield" min="-24" max="24" aria-labelledby='utcOffsetLabel'>
@@ -213,6 +223,29 @@
             <div class="output">
                 <button id="copyButton">Copy</button>
                 <textarea readonly id="outputField" wrap="off"></textarea>
+            </div>
+            <div class="faq">
+                <h2>What's this?</h2>
+                <p>
+                    The (v)Wii stores an internal offset which is used to calculate the UTC time based on the current RTC (Real-Time-Clock). This offset is usually calculated based on the time retrieved from the Wii's timeserver.<br>
+                    For some reason on the vWii System Menu this time is always set to an hardcoded offset added to the counter bias. This results in all sort of issues with WC24 related functionality which checks for this time.<br>
+                    This site generates a System Menu hack for <a href="https://github.com/DacoTaco/priiloader">Priiloader</a>, which corrects the UTC offset based on your system time.<br>
+                    Since it needs to convert the local system time to UTC it needs to know the UTC offset your system time uses.
+                </p>
+                <h2>How-To</h2>
+                <ol>
+                    <li>Enter the UTC offset which your Wii U system time is set to.</li>
+                    <li>Select the region of your console.</li>
+                    <li>Click on the <code>Generate</code> button.</li>
+                    <li>Copy the generated patch to your clipboard.</li>
+                    <li>Paste it at the end of Priiloader's <code>hacks_hash.ini</code>.</li>
+                    <li>You can now enable the hack in Priiloader.</li>
+                </ol>
+                <h2>Related Links</h2>
+                <ul>
+                    <li><a href="https://github.com/GaryOderNichts/priiloader-patch-gen">Source</a></li>
+                    <li><a href="https://github.com/DacoTaco/priiloader">Priiloader</a></li>
+                </ul>
             </div>
         </div>
     </body>
