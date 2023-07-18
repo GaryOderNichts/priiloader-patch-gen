@@ -172,6 +172,10 @@
 
                     $("#outputField").val(output);
                 });
+
+                let timezoneOffset = new Date().getTimezoneOffset() * -1;
+                $("#hourOffset").val(timezoneOffset / 60);
+                $("#minuteOffset").val(timezoneOffset % 60);
             });
         </script>
     </head>
