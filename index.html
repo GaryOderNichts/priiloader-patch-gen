@@ -152,6 +152,8 @@
                     let minute_offset = $("#minuteOffset").val();
 
                     if (Math.abs(hour_offset) > 24 || hour_offset == "" || minute_offset < 0 || minute_offset > 59 || minute_offset == "") {
+                        $("#copyButton").hide();
+                        $("#outputField").val("");
                         alert("Invalid UTC offset");
                         return;
                     }
@@ -171,11 +173,21 @@
                     output += "patch=" + generatePatch(region, hour_offset * 60 * 60 + minute_offset * 60) + "\n";
 
                     $("#outputField").val(output);
+                    $("#copyButton").html("Copy");
+                    $("#copyButton").show();
+                });
+
+                $("#copyButton").click(() => {
+                    navigator.clipboard.writeText($("#outputField").val());
+                    $("#copyButton").html("Copied!");
                 });
 
                 let timezoneOffset = new Date().getTimezoneOffset() * -1;
                 $("#hourOffset").val(timezoneOffset / 60);
                 $("#minuteOffset").val(timezoneOffset % 60);
+
+                $("#outputField").val("");
+                $("#copyButton").hide();
             });
         </script>
     </head>
